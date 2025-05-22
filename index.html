@@ -1,0 +1,1204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Word Blaster: Typing Warfare</title>
+    <style>
+        :root {
+            --primary-color: #ff4d4d;
+            --secondary-color: #4da6ff;
+            --accent-color: #ffcc00;
+            --dark-bg: #0a0a1a;
+            --darker-bg: #050510;
+            --light-text: #ffffff;
+            --dark-text: #333333;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Arial', sans-serif;
+            background: var(--dark-bg);
+            color: var(--light-text);
+            overflow: hidden;
+            user-select: none;
+            height: 100vh;
+        }
+        
+        #main-menu, #game-container {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+        }
+        
+        #main-menu {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(135deg, var(--dark-bg) 0%, var(--darker-bg) 100%);
+            z-index: 1000;
+        }
+        
+        .menu-title {
+            font-size: 4rem;
+            margin-bottom: 2rem;
+            color: var(--primary-color);
+            text-shadow: 0 0 10px rgba(255, 77, 77, 0.7);
+            letter-spacing: 3px;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        .menu-subtitle {
+            font-size: 1.2rem;
+            margin-bottom: 3rem;
+            color: var(--secondary-color);
+        }
+        
+        .level-select {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            width: 300px;
+            margin-bottom: 2rem;
+        }
+        
+        .level-btn {
+            padding: 15px 25px;
+            font-size: 1.2rem;
+            background: rgba(77, 166, 255, 0.2);
+            color: var(--light-text);
+            border: 2px solid var(--secondary-color);
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+        }
+        
+        .level-btn:hover {
+            background: rgba(77, 166, 255, 0.4);
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(77, 166, 255, 0.4);
+        }
+        
+        .level-btn.easy { border-color: #4CAF50; background: rgba(76, 175, 80, 0.2); }
+        .level-btn.easy:hover { background: rgba(76, 175, 80, 0.4); box-shadow: 0 5px 15px rgba(76, 175, 80, 0.4); }
+        
+        .level-btn.medium { border-color: #FFC107; background: rgba(255, 193, 7, 0.2); }
+        .level-btn.medium:hover { background: rgba(255, 193, 7, 0.4); box-shadow: 0 5px 15px rgba(255, 193, 7, 0.4); }
+        
+        .level-btn.hard { border-color: #F44336; background: rgba(244, 67, 54, 0.2); }
+        .level-btn.hard:hover { background: rgba(244, 67, 54, 0.4); box-shadow: 0 5px 15px rgba(244, 67, 54, 0.4); }
+        
+        .level-btn.insane { border-color: #9C27B0; background: rgba(156, 39, 176, 0.2); }
+        .level-btn.insane:hover { background: rgba(156, 39, 176, 0.4); box-shadow: 0 5px 15px rgba(156, 39, 176, 0.4); }
+        
+        .menu-footer {
+            position: absolute;
+            bottom: 20px;
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 0.8rem;
+        }
+        
+        #game-container {
+            display: none;
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            background: linear-gradient(to bottom, #001133, #000011);
+            overflow: hidden;
+        }
+        
+        #battlefield {
+            position: absolute;
+            width: 100%;
+            height: 80%;
+            bottom: 0;
+        }
+        
+        #player-turret {
+            position: absolute;
+            width: 120px;
+            height: 120px;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120"><defs><linearGradient id="turretGrad" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" style="stop-color:%23333;stop-opacity:1" /><stop offset="100%" style="stop-color:%23111;stop-opacity:1" /></linearGradient><radialGradient id="turretRadial" cx="50%" cy="50%" r="50%" fx="50%" fy="50%"><stop offset="0%" style="stop-color:%23777;stop-opacity:1" /><stop offset="100%" style="stop-color:%23555;stop-opacity:1" /></radialGradient></defs><rect x="45" y="20" width="30" height="70" fill="url(%23turretGrad)"/><circle cx="60" cy="35" r="35" fill="url(%23turretRadial)"/><circle cx="60" cy="35" r="20" fill="%23fff"/><circle cx="60" cy="35" r="10" fill="%234da6ff"/></svg>') no-repeat center;
+            z-index: 10;
+            filter: drop-shadow(0 0 10px rgba(77, 166, 255, 0.7));
+        }
+        
+        .enemy {
+            position: absolute;
+            color: white;
+            text-align: center;
+            font-weight: bold;
+            text-shadow: 0 0 5px red;
+            transition: transform 0.1s;
+        }
+        
+        .enemy.tank {
+            width: 140px;
+            height: 70px;
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 140 70"><defs><linearGradient id="tankGrad" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" style="stop-color:%23444;stop-opacity:1" /><stop offset="100%" style="stop-color:%23222;stop-opacity:1" /></linearGradient></defs><rect x="15" y="25" width="110" height="25" fill="url(%23tankGrad)"/><rect x="25" y="15" width="90" height="10" fill="%23333"/><circle cx="35" cy="60" r="12" fill="%23222"/><circle cx="105" cy="60" r="12" fill="%23222"/></svg>') no-repeat center;
+            filter: drop-shadow(0 0 5px rgba(255, 0, 0, 0.5));
+        }
+        
+        .enemy.car {
+            width: 110px;
+            height: 55px;
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 110 55"><defs><linearGradient id="carGrad" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" style="stop-color:%23d22;stop-opacity:1" /><stop offset="100%" style="stop-color:%23900;stop-opacity:1" /></linearGradient></defs><rect x="25" y="20" width="60" height="20" fill="url(%23carGrad)"/><rect x="30" y="15" width="50" height="5" fill="%23b00"/><circle cx="35" cy="45" r="8" fill="%23222"/><circle cx="75" cy="45" r="8" fill="%23222"/></svg>') no-repeat center;
+            filter: drop-shadow(0 0 5px rgba(255, 0, 0, 0.7));
+        }
+        
+        .enemy.jet {
+            width: 90px;
+            height: 45px;
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 90 45"><defs><linearGradient id="jetGrad" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" style="stop-color:%23999;stop-opacity:1" /><stop offset="100%" style="stop-color:%23666;stop-opacity:1" /></linearGradient></defs><polygon points="15,25 75,25 85,35 75,35 65,30 55,35 45,30 35,35 25,30 15,35" fill="url(%23jetGrad)"/><polygon points="75,25 80,20 85,25" fill="%23ccc"/></svg>') no-repeat center;
+            filter: drop-shadow(0 0 8px rgba(255, 165, 0, 0.7));
+        }
+        
+        .enemy.boss {
+            width: 200px;
+            height: 110px;
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 110"><defs><linearGradient id="bossGrad" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" style="stop-color:%23555;stop-opacity:1" /><stop offset="100%" style="stop-color:%23333;stop-opacity:1" /></linearGradient></defs><rect x="35" y="35" width="130" height="45" fill="url(%23bossGrad)"/><rect x="45" y="25" width="110" height="10" fill="%23444"/><circle cx="55" cy="90" r="17" fill="%23222"/><circle cx="145" cy="90" r="17" fill="%23222"/><rect x="165" y="45" width="35" height="25" fill="%23777"/></svg>') no-repeat center;
+            filter: drop-shadow(0 0 15px rgba(255, 0, 0, 0.9));
+        }
+        
+        .word-display {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 16px;
+            font-weight: bold;
+            letter-spacing: 1px;
+        }
+        
+        #hud {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.7);
+            border-radius: 8px;
+            border: 1px solid rgba(77, 166, 255, 0.5);
+            font-size: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            min-width: 200px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+        }
+        
+        .hud-item {
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .hud-label {
+            color: var(--secondary-color);
+        }
+        
+        .hud-value {
+            font-weight: bold;
+        }
+        
+        #health-bar {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 250px;
+            height: 25px;
+            background: rgba(255, 0, 0, 0.3);
+            border-radius: 5px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 0, 0, 0.5);
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+        }
+        
+        #health-fill {
+            height: 100%;
+            width: 100%;
+            background: linear-gradient(to right, #ff3333, #33ff33);
+            transition: width 0.3s;
+        }
+        
+        #typing-input {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 12px 20px;
+            font-size: 18px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid var(--secondary-color);
+            color: white;
+            text-align: center;
+            width: 400px;
+            max-width: 80%;
+            border-radius: 8px;
+            outline: none;
+            box-shadow: 0 0 15px rgba(77, 166, 255, 0.3);
+            transition: all 0.3s;
+        }
+        
+        #typing-input:focus {
+            border-color: var(--accent-color);
+            box-shadow: 0 0 20px rgba(255, 204, 0, 0.5);
+        }
+        
+        #level-display {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 2.5rem;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 30px 50px;
+            border-radius: 15px;
+            border: 2px solid var(--accent-color);
+            display: none;
+            text-align: center;
+            box-shadow: 0 0 30px rgba(255, 204, 0, 0.5);
+            animation: pulse 1.5s infinite;
+        }
+        
+        #level-number {
+            color: var(--accent-color);
+            font-size: 3.5rem;
+        }
+        
+        .explosion {
+            position: absolute;
+            width: 120px;
+            height: 120px;
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120"><defs><radialGradient id="explosionGrad" cx="50%" cy="50%" r="50%" fx="50%" fy="50%"><stop offset="0%" style="stop-color:%23ff8c00;stop-opacity:1" /><stop offset="50%" style="stop-color:%23ff4500;stop-opacity:1" /><stop offset="100%" style="stop-color:%23ff0000;stop-opacity:0" /></radialGradient></defs><circle cx="60" cy="60" r="60" fill="url(%23explosionGrad)"/></svg>') no-repeat center;
+            background-size: contain;
+            animation: explode 0.5s forwards;
+            z-index: 100;
+            filter: drop-shadow(0 0 15px rgba(255, 69, 0, 0.7));
+        }
+        
+        @keyframes explode {
+            0% { transform: scale(0); opacity: 1; }
+            100% { transform: scale(2); opacity: 0; }
+        }
+        
+        #game-over {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            display: none;
+        }
+        
+        #game-over h1 {
+            color: var(--primary-color);
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            text-shadow: 0 0 15px rgba(255, 0, 0, 0.7);
+        }
+        
+        .game-over-stats {
+            background: rgba(0, 0, 0, 0.7);
+            padding: 20px 40px;
+            border-radius: 10px;
+            border: 1px solid var(--secondary-color);
+            margin-bottom: 2rem;
+            text-align: center;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+        }
+        
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            margin: 10px 0;
+            min-width: 250px;
+        }
+        
+        .stat-label {
+            color: var(--secondary-color);
+            font-size: 1.2rem;
+        }
+        
+        .stat-value {
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+        
+        #restart-btn {
+            padding: 15px 30px;
+            font-size: 1.2rem;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 0 15px rgba(255, 77, 77, 0.5);
+        }
+        
+        #restart-btn:hover {
+            background: #ff3333;
+            transform: translateY(-3px);
+            box-shadow: 0 5px 20px rgba(255, 77, 77, 0.7);
+        }
+        
+        .combo-display {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 3rem;
+            color: var(--accent-color);
+            text-shadow: 0 0 10px rgba(255, 204, 0, 0.7);
+            opacity: 0;
+            pointer-events: none;
+            z-index: 50;
+            animation: comboFade 1.5s forwards;
+        }
+        
+        @keyframes comboFade {
+            0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
+            20% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
+            80% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+            100% { transform: translate(-50%, -50%) scale(1.5); opacity: 0; }
+        }
+        
+        .power-up {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            z-index: 20;
+            animation: float 3s infinite ease-in-out;
+        }
+        
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-15px); }
+            100% { transform: translateY(0px); }
+        }
+        
+        .power-up.freeze {
+            background: radial-gradient(circle, #4da6ff, #0066cc);
+            border: 2px solid #fff;
+            box-shadow: 0 0 15px rgba(77, 166, 255, 0.7);
+        }
+        
+        .power-up.double {
+            background: radial-gradient(circle, #ffcc00, #ff9900);
+            border: 2px solid #fff;
+            box-shadow: 0 0 15px rgba(255, 204, 0, 0.7);
+        }
+        
+        .power-up.rapid {
+            background: radial-gradient(circle, #ff4d4d, #cc0000);
+            border: 2px solid #fff;
+            box-shadow: 0 0 15px rgba(255, 77, 77, 0.7);
+        }
+        
+        .bullet {
+            position: absolute;
+            width: 6px;
+            height: 15px;
+            background: var(--accent-color);
+            border-radius: 3px;
+            z-index: 5;
+        }
+    </style>
+</head>
+<body>
+    <div id="main-menu">
+        <h1 class="menu-title">WORD BLASTER</h1>
+        <p class="menu-subtitle">Typing Warfare</p>
+        
+        <div class="level-select">
+            <button class="level-btn easy" data-level="1">BEGINNER</button>
+            <button class="level-btn medium" data-level="4">ADVANCED</button>
+            <button class="level-btn hard" data-level="8">EXPERT</button>
+            <button class="level-btn insane" data-level="12">INSANE</button>
+        </div>
+        
+        <p class="menu-footer">Type the words on enemies to destroy them!</p>
+    </div>
+    
+    <div id="game-container">
+        <div id="battlefield">
+            <div id="player-turret"></div>
+        </div>
+        <div id="hud">
+            <div class="hud-item">
+                <span class="hud-label">LEVEL:</span>
+                <span class="hud-value" id="level">1</span>
+            </div>
+            <div class="hud-item">
+                <span class="hud-label">SCORE:</span>
+                <span class="hud-value" id="score">0</span>
+            </div>
+            <div class="hud-item">
+                <span class="hud-label">WPM:</span>
+                <span class="hud-value" id="wpm">0</span>
+            </div>
+            <div class="hud-item">
+                <span class="hud-label">ACCURACY:</span>
+                <span class="hud-value" id="accuracy">100%</span>
+            </div>
+            <div class="hud-item">
+                <span class="hud-label">COMBO:</span>
+                <span class="hud-value" id="combo">0x</span>
+            </div>
+        </div>
+        <div id="health-bar">
+            <div id="health-fill"></div>
+        </div>
+        <input type="text" id="typing-input" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Type here...">
+        <div id="level-display">LEVEL <span id="level-number">1</span></div>
+        <div id="game-over">
+            <h1>GAME OVER</h1>
+            <div class="game-over-stats">
+                <div class="stat-item">
+                    <span class="stat-label">FINAL SCORE:</span>
+                    <span class="stat-value" id="final-score">0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">LEVEL REACHED:</span>
+                    <span class="stat-value" id="final-level">1</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">HIGHEST COMBO:</span>
+                    <span class="stat-value" id="final-combo">0x</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">ACCURACY:</span>
+                    <span class="stat-value" id="final-accuracy">100%</span>
+                </div>
+            </div>
+            <button id="restart-btn">PLAY AGAIN</button>
+        </div>
+    </div>
+
+    <script>
+          // Game state
+          const gameState = {
+            level: 1,
+            score: 0,
+            health: 100,
+            combo: 0,
+            maxCombo: 0,
+            correctWords: 0,
+            totalWords: 0,
+            startTime: null,
+            activeEnemies: [],
+            activePowerUps: [],
+            currentWord: '',
+            typedLetters: 0,
+            wordLists: {
+                easy: [
+                    'war', 'gun', 'tank', 'army', 'fire', 'shot', 'hit', 'aim', 'boom', 'base',
+                    'ammo', 'bomb', 'duck', 'fear', 'gear', 'hero', 'jump', 'kill', 'land', 'mine'
+                ],
+                medium: [
+                    'soldier', 'attack', 'defend', 'combat', 'mission', 'target', 'bullet', 'shield', 
+                    'victory', 'defeat', 'capture', 'danger', 'enemy', 'fort', 'guard', 'honor', 
+                    'impact', 'jungle', 'leader', 'marine'
+                ],
+                hard: [
+                    'artillery', 'battalion', 'strategy', 'offensive', 'resistance', 'explosion', 
+                    'ammunition', 'barricade', 'fortification', 'reconnaissance', 'commander', 
+                    'detonate', 'evacuate', 'flanking', 'grenade', 'hostage', 'infantry', 'justice', 
+                    'knockout', 'lightning'
+                ],
+                insane: [
+                    'catastrophic', 'extermination', 'annihilation', 'devastation', 'obliteration',
+                    'armageddon', 'apocalypse', 'destruction', 'demolition', 'eradication'
+                ],
+                boss: [
+                    'destroy all enemies', 'typing warfare', 'word blaster extreme', 
+                    'maximum firepower', 'ultimate destruction', 'victory or death', 
+                    'all systems go', 'launch attack sequence', 'initiate self destruct', 
+                    'final countdown'
+                ]
+            },
+            enemyTypes: [
+                { type: 'tank', speed: 1, words: 1, health: 1, score: 10 },
+                { type: 'car', speed: 1.5, words: 1, health: 1, score: 15 },
+                { type: 'jet', speed: 2, words: 1, health: 1, score: 20 },
+                { type: 'boss', speed: 0.8, words: 3, health: 5, score: 100 }
+            ],
+            powerUps: [
+                { type: 'freeze', word: 'freeze', duration: 5000, color: '#4da6ff' },
+                { type: 'double', word: 'double', duration: 8000, color: '#ffcc00' },
+                { type: 'rapid', word: 'rapid', duration: 6000, color: '#ff4d4d' }
+            ],
+            activeEffects: [],
+            gameActive: false,
+            difficulty: 'easy',
+            lastSpawnTime: 0,
+            lastTypingMistake: 0
+        };
+
+        // [Previous DOM elements and initialization code remains the same until getWordList()]
+
+        // Get appropriate word list based on current level and difficulty
+        function getWordList() {
+            const level = gameState.level;
+            
+            // Boss levels use boss words
+            if (level % 5 === 0) {
+                return gameState.wordLists.boss;
+            }
+            
+            // Insane difficulty uses insane words after level 10
+            if (gameState.difficulty === 'insane' && level >= 10) {
+                return [...gameState.wordLists.insane, ...gameState.wordLists.boss];
+            }
+            
+            // Higher levels mix words from multiple difficulties
+            if (level >= 15) {
+                return [...gameState.wordLists.hard, ...gameState.wordLists.insane, ...gameState.wordLists.boss];
+            } else if (level >= 10) {
+                return [...gameState.wordLists.medium, ...gameState.wordLists.hard];
+            } else if (level >= 5) {
+                return [...gameState.wordLists.easy, ...gameState.wordLists.medium];
+            }
+            
+            // Base difficulty words
+            return gameState.wordLists[gameState.difficulty];
+        }
+
+        // [Previous game functions remain the same until the typing input handler]
+
+        // Handle typing input
+        typingInput.addEventListener('input', (e) => {
+            if (!gameState.gameActive) return;
+            
+            const input = typingInput.value.toLowerCase();
+            gameState.typedLetters++;
+            
+            // Check for matching enemies
+            let matchedEnemy = null;
+            
+            for (const enemy of gameState.activeEnemies) {
+                if (enemy.word.startsWith(input)) {
+                    matchedEnemy = enemy;
+                    enemy.typedWord = input;
+                    
+                    // Highlight matched letters
+                    const wordDisplay = enemy.element.querySelector('.word-display');
+                    if (wordDisplay) {
+                        const matchedPart = enemy.word.substring(0, input.length);
+                        const remainingPart = enemy.word.substring(input.length);
+                        wordDisplay.innerHTML = `<span style="color: #0f0">${matchedPart}</span>${remainingPart}`;
+                    }
+                    break;
+                }
+            }
+            
+            // Check for power-up words
+            let matchedPowerUp = null;
+            for (const powerUp of gameState.activePowerUps) {
+                if (powerUp.word.startsWith(input)) {
+                    matchedPowerUp = powerUp;
+                    break;
+                }
+            }
+            
+            // If no match, reset input and break combo
+            if (!matchedEnemy && !matchedPowerUp && input.length > 0) {
+                typingInput.value = '';
+                resetCombo();
+                gameState.lastTypingMistake = Date.now();
+                return;
+            }
+            
+            // Check for complete word match (enemies)
+            if (matchedEnemy && input === matchedEnemy.word) {
+                // Create bullet animation
+                createBullet(
+                    matchedEnemy.x + matchedEnemy.element.offsetWidth / 2, 
+                    matchedEnemy.y + matchedEnemy.element.offsetHeight / 2
+                );
+                
+                // Enemy destroyed
+                destroyEnemy(matchedEnemy);
+                typingInput.value = '';
+                
+                // Update stats
+                gameState.correctWords++;
+                gameState.totalWords++;
+                gameState.combo++;
+                
+                // Update max combo
+                if (gameState.combo > gameState.maxCombo) {
+                    gameState.maxCombo = gameState.combo;
+                }
+                
+                // Calculate score with potential multipliers
+                let scoreMultiplier = 1;
+                if (gameState.activeEffects.some(effect => effect.type === 'double')) {
+                    scoreMultiplier *= 2;
+                }
+                scoreMultiplier *= Math.min(1 + gameState.combo * 0.1, 3); // Combo multiplier up to 3x
+                
+                gameState.score += Math.floor(matchedEnemy.scoreValue * scoreMultiplier);
+                
+                // Show combo display for combos of 3 or more
+                if (gameState.combo >= 3) {
+                    const comboDisplay = document.createElement('div');
+                    comboDisplay.className = 'combo-display';
+                    comboDisplay.textContent = `${gameState.combo}x COMBO!`;
+                    battlefield.appendChild(comboDisplay);
+                    
+                    setTimeout(() => {
+                        if (comboDisplay.parentNode) {
+                            battlefield.removeChild(comboDisplay);
+                        }
+                    }, 1500);
+                }
+                
+                // Level up every 10 correct words
+                if (gameState.correctWords >= 10) {
+                    gameState.level++;
+                    gameState.correctWords = 0;
+                    startLevel();
+                    return;
+                }
+                
+                updateHUD();
+            }
+            
+            // Check for complete word match (power-ups)
+            if (matchedPowerUp && input === matchedPowerUp.word) {
+                // Create bullet animation
+                createBullet(
+                    matchedPowerUp.x + matchedPowerUp.element.offsetWidth / 2, 
+                    matchedPowerUp.y + matchedPowerUp.element.offsetHeight / 2
+                );
+                
+                // Activate power-up
+                activatePowerUp(matchedPowerUp);
+                
+                // Remove power-up
+                battlefield.removeChild(matchedPowerUp.element);
+                gameState.activePowerUps = gameState.activePowerUps.filter(p => p !== matchedPowerUp);
+                
+                typingInput.value = '';
+            }
+        });
+
+        // Spawn enemies based on current level
+        function spawnEnemies() {
+            if (!gameState.gameActive) return;
+            
+            const now = Date.now();
+            const level = gameState.level;
+            let enemyTypeIndex = 0;
+            let spawnInterval = 2000;
+            
+            // Adjust enemy type and speed based on level and difficulty
+            if (gameState.difficulty === 'insane') {
+                spawnInterval = 1000;
+                if (level >= 5) enemyTypeIndex = 2; // Jets appear earlier on insane
+            } else if (level >= 8) {
+                enemyTypeIndex = 2; // Jets
+                spawnInterval = 1500;
+            } else if (level >= 4) {
+                enemyTypeIndex = 1; // Cars
+                spawnInterval = 1800;
+            }
+            
+            // Boss every 5 levels
+            if (level % 5 === 0) {
+                enemyTypeIndex = 3; // Boss
+                spawnInterval = gameState.difficulty === 'insane' ? 3000 : 5000;
+            }
+            
+            const enemyType = gameState.enemyTypes[enemyTypeIndex];
+            const wordCount = enemyType.words;
+            
+            // Get appropriate word list
+            const wordPool = getWordList();
+            
+            // Get random words - ensure we don't get the same word immediately after a mistake
+            let words = [];
+            let attempts = 0;
+            const maxAttempts = 10;
+            
+            while (words.length < wordCount && attempts < maxAttempts) {
+                attempts++;
+                const randomIndex = Math.floor(Math.random() * wordPool.length);
+                const candidateWord = wordPool[randomIndex];
+                
+                // Don't use the same word immediately after a typing mistake
+                if (gameState.lastTypingMistake && 
+                    (Date.now() - gameState.lastTypingMistake < 3000) &&
+                    gameState.currentWord === candidateWord) {
+                    continue;
+                }
+                
+                words.push(candidateWord);
+                gameState.currentWord = candidateWord;
+            }
+            
+            // Fallback if we couldn't find a suitable word
+            if (words.length === 0) {
+                words.push(wordPool[Math.floor(Math.random() * wordPool.length)]);
+            }
+            
+            const word = words.join(' ');
+            
+            // Create enemy element
+            const enemyElement = document.createElement('div');
+            enemyElement.className = `enemy ${enemyType.type}`;
+            
+            const wordDisplay = document.createElement('div');
+            wordDisplay.className = 'word-display';
+            wordDisplay.textContent = word;
+            enemyElement.appendChild(wordDisplay);
+            
+            battlefield.appendChild(enemyElement);
+            
+            // Set initial position
+            const startX = Math.random() * (battlefield.clientWidth - 100) + 50;
+            enemyElement.style.left = `${startX}px`;
+            enemyElement.style.top = '-100px';
+            
+            // Add enemy to active list
+            const enemy = {
+                element: enemyElement,
+                word: word.toLowerCase(),
+                typedWord: '',
+                type: enemyType.type,
+                speed: enemyType.speed * (1 + (level * 0.05)) * (gameState.difficulty === 'insane' ? 1.5 : 1),
+                health: enemyType.health,
+                x: startX,
+                y: -100,
+                scoreValue: enemyType.score * (1 + (level * 0.1))
+            };
+            
+            gameState.activeEnemies.push(enemy);
+            gameState.lastSpawnTime = now;
+            
+            // Schedule next spawn
+            setTimeout(spawnEnemies, spawnInterval);
+        }
+
+
+        // Spawn power-ups randomly
+        function spawnPowerUps() {
+            if (!gameState.gameActive) return;
+            
+            // 10% chance to spawn a power-up every 5 seconds
+            if (Math.random() < 0.1) {
+                const powerUpType = gameState.powerUps[Math.floor(Math.random() * gameState.powerUps.length)];
+                
+                const powerUpElement = document.createElement('div');
+                powerUpElement.className = `power-up ${powerUpType.type}`;
+                powerUpElement.textContent = powerUpType.word[0].toUpperCase();
+                powerUpElement.style.color = 'white';
+                
+                battlefield.appendChild(powerUpElement);
+                
+                // Set random position
+                const x = Math.random() * (battlefield.clientWidth - 50) + 25;
+                const y = Math.random() * (battlefield.clientHeight * 0.6) + 20;
+                powerUpElement.style.left = `${x}px`;
+                powerUpElement.style.top = `${y}px`;
+                
+                const powerUp = {
+                    element: powerUpElement,
+                    type: powerUpType.type,
+                    word: powerUpType.word,
+                    x: x,
+                    y: y
+                };
+                
+                gameState.activePowerUps.push(powerUp);
+            }
+            
+            // Schedule next power-up chance
+            setTimeout(spawnPowerUps, 5000);
+        }
+
+        // Create bullet animation
+        function createBullet(targetX, targetY) {
+            const turret = document.getElementById('player-turret');
+            const turretRect = turret.getBoundingClientRect();
+            const startX = turretRect.left + turretRect.width / 2;
+            const startY = turretRect.top;
+            
+            const bullet = document.createElement('div');
+            bullet.className = 'bullet';
+            bullet.style.left = `${startX}px`;
+            bullet.style.top = `${startY}px`;
+            battlefield.appendChild(bullet);
+            
+            // Animate bullet
+            const animation = bullet.animate([
+                { transform: `translate(0, 0)` },
+                { transform: `translate(${targetX - startX}px, ${targetY - startY}px)` }
+            ], {
+                duration: 300,
+                easing: 'linear'
+            });
+            
+            animation.onfinish = () => {
+                if (bullet.parentNode) {
+                    battlefield.removeChild(bullet);
+                }
+            };
+        }
+
+        // Game loop
+        function gameLoop() {
+            if (!gameState.gameActive) return;
+            
+            // Apply active effects
+            applyEffects();
+            
+            // Update enemy positions
+            gameState.activeEnemies.forEach(enemy => {
+                // Check if time is frozen
+                const isFrozen = gameState.activeEffects.some(effect => effect.type === 'freeze');
+                
+                if (!isFrozen) {
+                    enemy.y += enemy.speed;
+                    enemy.element.style.top = `${enemy.y}px`;
+                }
+                
+                // Check if enemy reached bottom
+                if (enemy.y > battlefield.clientHeight - 50) {
+                    takeDamage(10);
+                    removeEnemy(enemy);
+                }
+            });
+            
+            // Check for power-up collisions
+            checkPowerUpCollisions();
+            
+            // Update WPM
+            updateWPM();
+            
+            // Continue loop
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Apply active power-up effects
+        function applyEffects() {
+            const now = Date.now();
+            
+            // Remove expired effects
+            gameState.activeEffects = gameState.activeEffects.filter(effect => {
+                return effect.endTime > now;
+            });
+        }
+
+        // Check if player has collided with any power-ups
+        function checkPowerUpCollisions() {
+            const playerRect = document.getElementById('player-turret').getBoundingClientRect();
+            
+            gameState.activePowerUps.forEach((powerUp, index) => {
+                const powerUpRect = powerUp.element.getBoundingClientRect();
+                
+                // Simple collision detection
+                if (
+                    playerRect.left < powerUpRect.right &&
+                    playerRect.right > powerUpRect.left &&
+                    playerRect.top < powerUpRect.bottom &&
+                    playerRect.bottom > powerUpRect.top
+                ) {
+                    // Activate power-up
+                    activatePowerUp(powerUp);
+                    
+                    // Remove power-up
+                    battlefield.removeChild(powerUp.element);
+                    gameState.activePowerUps.splice(index, 1);
+                }
+            });
+        }
+
+        // Activate a power-up
+        function activatePowerUp(powerUp) {
+            const now = Date.now();
+            const powerUpType = gameState.powerUps.find(p => p.type === powerUp.type);
+            
+            if (!powerUpType) return;
+            
+            // Add effect
+            gameState.activeEffects.push({
+                type: powerUp.type,
+                startTime: now,
+                endTime: now + powerUpType.duration
+            });
+            
+            // Visual feedback
+            const feedback = document.createElement('div');
+            feedback.className = 'combo-display';
+            feedback.textContent = powerUp.type.toUpperCase() + '!';
+            battlefield.appendChild(feedback);
+            
+            setTimeout(() => {
+                if (feedback.parentNode) {
+                    battlefield.removeChild(feedback);
+                }
+            }, 1500);
+        }
+
+        // Handle typing input
+        typingInput.addEventListener('input', (e) => {
+            if (!gameState.gameActive) return;
+            
+            const input = typingInput.value.toLowerCase();
+            gameState.typedLetters++;
+            
+            // Check for matching enemies
+            let matchedEnemy = null;
+            
+            for (const enemy of gameState.activeEnemies) {
+                if (enemy.word.startsWith(input)) {
+                    matchedEnemy = enemy;
+                    enemy.typedWord = input;
+                    
+                    // Highlight matched letters
+                    const wordDisplay = enemy.element.querySelector('.word-display');
+                    if (wordDisplay) {
+                        const matchedPart = enemy.word.substring(0, input.length);
+                        const remainingPart = enemy.word.substring(input.length);
+                        wordDisplay.innerHTML = `<span style="color: #0f0">${matchedPart}</span>${remainingPart}`;
+                    }
+                    break;
+                }
+            }
+            
+            // Check for power-up words
+            let matchedPowerUp = null;
+            for (const powerUp of gameState.activePowerUps) {
+                if (powerUp.word.startsWith(input)) {
+                    matchedPowerUp = powerUp;
+                    break;
+                }
+            }
+            
+            // If no match, reset input and break combo
+            if (!matchedEnemy && !matchedPowerUp && input.length > 0) {
+                typingInput.value = '';
+                resetCombo();
+                return;
+            }
+            
+            // Check for complete word match (enemies)
+            if (matchedEnemy && input === matchedEnemy.word) {
+                // Create bullet animation
+                createBullet(
+                    matchedEnemy.x + matchedEnemy.element.offsetWidth / 2, 
+                    matchedEnemy.y + matchedEnemy.element.offsetHeight / 2
+                );
+                
+                // Enemy destroyed
+                destroyEnemy(matchedEnemy);
+                typingInput.value = '';
+                
+                // Update stats
+                gameState.correctWords++;
+                gameState.totalWords++;
+                gameState.combo++;
+                
+                // Update max combo
+                if (gameState.combo > gameState.maxCombo) {
+                    gameState.maxCombo = gameState.combo;
+                }
+                
+                // Calculate score with potential multipliers
+                let scoreMultiplier = 1;
+                if (gameState.activeEffects.some(effect => effect.type === 'double')) {
+                    scoreMultiplier *= 2;
+                }
+                scoreMultiplier *= Math.min(1 + gameState.combo * 0.1, 3); // Combo multiplier up to 3x
+                
+                gameState.score += Math.floor(matchedEnemy.scoreValue * scoreMultiplier);
+                
+                // Show combo display for combos of 3 or more
+                if (gameState.combo >= 3) {
+                    const comboDisplay = document.createElement('div');
+                    comboDisplay.className = 'combo-display';
+                    comboDisplay.textContent = `${gameState.combo}x COMBO!`;
+                    battlefield.appendChild(comboDisplay);
+                    
+                    setTimeout(() => {
+                        if (comboDisplay.parentNode) {
+                            battlefield.removeChild(comboDisplay);
+                        }
+                    }, 1500);
+                }
+                
+                // Level up every 10 correct words
+                if (gameState.correctWords >= 10) {
+                    gameState.level++;
+                    gameState.correctWords = 0;
+                    startLevel();
+                    return;
+                }
+                
+                updateHUD();
+            }
+            
+            // Check for complete word match (power-ups)
+            if (matchedPowerUp && input === matchedPowerUp.word) {
+                // Create bullet animation
+                createBullet(
+                    matchedPowerUp.x + matchedPowerUp.element.offsetWidth / 2, 
+                    matchedPowerUp.y + matchedPowerUp.element.offsetHeight / 2
+                );
+                
+                // Activate power-up
+                activatePowerUp(matchedPowerUp);
+                
+                // Remove power-up
+                battlefield.removeChild(matchedPowerUp.element);
+                gameState.activePowerUps = gameState.activePowerUps.filter(p => p !== matchedPowerUp);
+                
+                typingInput.value = '';
+            }
+        });
+
+        // Destroy enemy
+        function destroyEnemy(enemy) {
+            // Create explosion
+            const explosion = document.createElement('div');
+            explosion.className = 'explosion';
+            explosion.style.left = `${enemy.x}px`;
+            explosion.style.top = `${enemy.y}px`;
+            battlefield.appendChild(explosion);
+            
+            // Remove explosion after animation
+            setTimeout(() => {
+                if (explosion.parentNode) {
+                    battlefield.removeChild(explosion);
+                }
+            }, 500);
+            
+            // Remove enemy
+            removeEnemy(enemy);
+        }
+
+        // Remove enemy from game
+        function removeEnemy(enemy) {
+            if (enemy.element && enemy.element.parentNode) {
+                battlefield.removeChild(enemy.element);
+            }
+            
+            const index = gameState.activeEnemies.indexOf(enemy);
+            if (index !== -1) {
+                gameState.activeEnemies.splice(index, 1);
+            }
+        }
+
+        // Take damage
+        function takeDamage(amount) {
+            gameState.health -= amount;
+            healthFill.style.width = `${gameState.health}%`;
+            
+            // Flash red when hit
+            battlefield.style.backgroundColor = 'rgba(255, 0, 0, 0.3)';
+            setTimeout(() => {
+                battlefield.style.backgroundColor = '';
+            }, 200);
+            
+            // Check for game over
+            if (gameState.health <= 0) {
+                gameOver();
+            }
+            
+            updateHUD();
+        }
+
+        // Reset combo
+        function resetCombo() {
+            gameState.combo = 0;
+            gameState.totalWords++;
+            updateHUD();
+        }
+
+        // Update WPM calculation
+        function updateWPM() {
+            if (!gameState.startTime) return;
+            
+            const minutes = (Date.now() - gameState.startTime) / 60000;
+            const wpm = Math.floor(gameState.typedLetters / 5 / minutes) || 0;
+            wpmElement.textContent = wpm;
+        }
+
+        // Update accuracy
+        function updateAccuracy() {
+            const accuracy = gameState.totalWords > 0 
+                ? Math.floor((gameState.correctWords / gameState.totalWords) * 100) 
+                : 100;
+            accuracyElement.textContent = `${accuracy}%`;
+            return accuracy;
+        }
+
+        // Update HUD
+        function updateHUD() {
+            scoreElement.textContent = gameState.score;
+            comboElement.textContent = `${gameState.combo}x`;
+            updateAccuracy();
+            updateWPM();
+        }
+
+        // Game over
+        function gameOver() {
+            gameState.gameActive = false;
+            finalScoreElement.textContent = gameState.score;
+            finalLevelElement.textContent = gameState.level;
+            finalComboElement.textContent = `${gameState.maxCombo}x`;
+            finalAccuracyElement.textContent = `${updateAccuracy()}%`;
+            gameOverScreen.style.display = 'flex';
+            typingInput.blur();
+        }
+
+        // Initialize game when page loads
+        window.addEventListener('load', () => {
+            // Add click handlers to level buttons
+            document.querySelectorAll('.level-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const level = parseInt(this.getAttribute('data-level'));
+                    initGame(level);
+                });
+            });
+            
+            // Add click handler to restart button
+            document.getElementById('restart-btn').addEventListener('click', function() {
+                document.getElementById('game-container').style.display = 'none';
+                document.getElementById('main-menu').style.display = 'flex';
+            });
+        });
+    </script>
+</body>
+</html>
